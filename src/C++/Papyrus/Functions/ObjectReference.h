@@ -21,6 +21,99 @@ namespace Papyrus::ObjectReference
 		}
 	}
 
+	inline std::vector<RE::TESForm*> AddArmorsOfTypeToArray(VM* a_vm, StackID a_stackID, RE::StaticFunctionTag*,
+		RE::TESObjectREFR* a_ref,
+		std::uint32_t a_armorType,
+		bool a_noEquipped,
+		bool a_noFavourited,
+		bool a_noQuestItem,
+		std::vector<std::uint32_t> a_slotsToSkip)
+	{
+		using Slot = RE::BIPED_MODEL::BipedObjectSlot;
+		std::vector<RE::TESForm*> result;
+
+		if (!a_ref) {
+			a_vm->TraceStack("Object reference is None", a_stackID);
+			return result;
+		}
+
+		const auto armorType = static_cast<RE::BGSBipedObjectForm::ArmorType>(a_armorType);
+
+		auto inv = a_ref->GetInventory([armorType, a_slotsToSkip](RE::TESBoundObject& a_object) {
+			const auto armor = a_object.As<RE::TESObjectARMO>();
+			if (armor && armor->GetArmorType() == armorType) {
+				if (a_slotsToSkip.empty() || std::ranges::none_of(a_slotsToSkip,
+												 [&](const auto& slot) {
+													 return armor->HasPartOf(static_cast<Slot>(slot));
+												 })) {
+					return true;
+				}
+			}
+			return false;
+		});
+
+		for (const auto& [item, data] : inv) {
+			if (item->Is(RE::FormType::LeveledItem)) {
+				continue;
+			}
+			const auto& [count, entry] = data;
+			if (count > 0 && inv_util::can_be_taken(entry, a_noEquipped, a_noFavourited, a_noQuestItem)) {
+				result.push_back(item);
+			}
+		}
+
+		return result;
+	}
+
+	inline void AddArmorsOfTypeToList(VM* a_vm, StackID a_stackID, RE::StaticFunctionTag*,
+		RE::TESObjectREFR* a_ref,
+		RE::BGSListForm* a_list,
+		std::uint32_t a_armorType,
+		bool a_noEquipped,
+		bool a_noFavourited,
+		bool a_noQuestItem,
+		std::vector<std::uint32_t> a_slotsToSkip)
+	{
+		using Slot = RE::BIPED_MODEL::BipedObjectSlot;
+		std::vector<RE::TESForm*> result;
+
+		if (!a_ref) {
+			a_vm->TraceStack("Object reference is None", a_stackID);
+			return;
+		}
+		if (!a_list) {
+			a_vm->TraceStack("Formlist is None", a_stackID);
+			return;
+		}
+
+		const auto armorType = static_cast<RE::BGSBipedObjectForm::ArmorType>(a_armorType);
+
+		auto inv = a_ref->GetInventory([armorType, a_slotsToSkip](RE::TESBoundObject& a_object) {
+			const auto armor = a_object.As<RE::TESObjectARMO>();
+			if (armor && armor->GetArmorType() == armorType) {
+				if (a_slotsToSkip.empty() || std::ranges::none_of(a_slotsToSkip,
+												 [&](const auto& slot) {
+													 return armor->HasPartOf(static_cast<Slot>(slot));
+												 })) {
+					return true;
+				}
+			}
+			return false;
+		});
+
+		for (const auto& [item, data] : inv) {
+			if (item->Is(RE::FormType::LeveledItem)) {
+				continue;
+			}
+			const auto& [count, entry] = data;
+			if (count > 0 && inv_util::can_be_taken(entry, a_noEquipped, a_noFavourited, a_noQuestItem)) {
+				a_list->AddForm(item);
+			}
+		}
+
+		return;
+	}
+
 	inline std::vector<RE::TESForm*> AddAllItemsToArray(VM* a_vm, StackID a_stackID, RE::StaticFunctionTag*,
 		RE::TESObjectREFR* a_ref,
 		bool a_noEquipped,
@@ -1619,6 +1712,8 @@ namespace Papyrus::ObjectReference
 
 	inline void Bind(VM& a_vm)
 	{
+		BIND(AddArmorsOfTypeToArray);
+		BIND(AddArmorsOfTypeToList);
 		BIND(AddAllItemsToArray);
 		BIND(AddAllItemsToList);
 		BIND(AddItemsOfTypeToArray);

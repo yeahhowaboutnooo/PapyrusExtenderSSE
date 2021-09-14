@@ -907,6 +907,17 @@ Scriptname PO3_SKSEFunctions Hidden
 	;GETTERS
 	;--------
 		
+	;/      ARMOR TYPE
+	        Light = 0
+	        Heavy = 1
+	        Clothing = 2
+	/;
+	;Adds armor of type to array, filtering out equipped, favourited and quest items, optionally skipping biped slots.
+	Form[] Function AddArmorsOfTypeToArray(ObjectReference akRef, int afArmorType, bool abNoEquipped = true, bool abNoFavorited = false, bool abNoQuestItem = false, int[] aiSlotsToSkip = None) global native
+
+	;Adds armor of type to formlist, filtering out equipped, favourited and quest items, optionally skipping biped slots.
+	Function AddArmorsOfTypeToList(ObjectReference akRef, Formlist akList, int afArmorType, bool abNoEquipped = true, bool abNoFavorited = false, bool abNoQuestItem = false, int[] aiSlotsToSkip = None) global native
+	
 	;Adds all inventory items to array, filtering out equipped, favourited and quest items. 
 	Form[] Function AddAllItemsToArray(ObjectReference akRef, bool abNoEquipped = true, bool abNoFavorited = false, bool abNoQuestItem = false) global native
 	
